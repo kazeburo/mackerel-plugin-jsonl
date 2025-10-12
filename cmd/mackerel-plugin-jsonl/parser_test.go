@@ -22,17 +22,9 @@ func TestBfloat64(t *testing.T) {
 	}
 }
 
-func TestUnsafeString(t *testing.T) {
-	b := []byte("hello")
-	s := unsafeString(b)
-	if s != "hello" {
-		t.Errorf("expected 'hello', got '%s'", s)
-	}
-}
-
 func TestParser_Parse(t *testing.T) {
 	opt := &Opt{
-		aggregatorFunctions: []AggregatorFunction{
+		aggregatorFunctions: []*AggregatorFunction{
 			{
 				aggregator: "count",
 				jsonKey:    []string{"foo"},

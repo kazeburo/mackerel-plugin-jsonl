@@ -18,7 +18,7 @@ func TestOpt_calculatePerDuration(t *testing.T) {
 func TestOpt_Output(t *testing.T) {
 	opt := &Opt{
 		Prefix: "test",
-		aggregatorFunctions: []AggregatorFunction{
+		aggregatorFunctions: []*AggregatorFunction{
 			{
 				aggregator: "count",
 				name:       "foo",

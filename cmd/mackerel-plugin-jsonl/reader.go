@@ -21,7 +21,7 @@ func (p *Opt) run() error {
 		fp.ArchiveDir = p.LogArchiveDir
 	}
 	_, err := fp.Parse(
-		fmt.Sprintf("%s-mp-log-counter", p.Prefix),
+		fmt.Sprintf("%s-mp-jsonl", p.Prefix),
 		p.LogFile,
 	)
 	if err != nil {
@@ -42,15 +42,42 @@ func (p *Opt) calculatePerDuration(i int) float64 {
 func (p *Opt) Output() string {
 	now := uint64(time.Now().Unix())
 	var output strings.Builder
-	for _, af := range p.aggregatorFunctions {
+	for i := 0; i < len(p.aggregatorFunctions); i++ {
+		af := p.aggregatorFunctions[i]
 		switch af.aggregator {
 		case "count":
+			if p.duration == 0 {
+				// avoid division by zero
+				continue
+			}
 			fmt.Fprintf(&output, "%s.%s\t%f\t%d\n", p.Prefix, af.name, p.calculatePerDuration(af.count), now)
-		case "group_by":
+		case "group_by", "group_by_with_percentage":
+			if p.duration == 0 {
+				// avoid division by zero
+				continue
+			}
+			modifiedMap := map[string]int{}
+			for k, v := range af.groupBy {
+				safeKey := strings.ReplaceAll(k, " ", "_")
+				safeKey = strings.ReplaceAll(safeKey, ".", "_")
+				modifiedKey := af.applyModifiers(safeKey)
+				modifiedMap[modifiedKey] += v
+			}
+			af.groupBy = modifiedMap
+			total := 0
 			for k, v := range af.groupBy {
 				safeKey := strings.ReplaceAll(k, " ", "_")
 				safeKey = strings.ReplaceAll(safeKey, ".", "_")
 				fmt.Fprintf(&output, "%s.%s.%s\t%f\t%d\n", p.Prefix, af.name, safeKey, p.calculatePerDuration(v), now)
+				total += v
+			}
+			if af.aggregator == "group_by_with_percentage" && total > 0 {
+				for k, v := range af.groupBy {
+					safeKey := strings.ReplaceAll(k, " ", "_")
+					safeKey = strings.ReplaceAll(safeKey, ".", "_")
+					percentage := float64(v) / float64(total) * 100
+					fmt.Fprintf(&output, "%s.%s_percentage.%s\t%f\t%d\n", p.Prefix, af.name, safeKey, percentage, now)
+				}
 			}
 		case "percentile":
 			if len(af.percentiles) == 0 {

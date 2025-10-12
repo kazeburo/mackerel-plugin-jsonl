@@ -10,7 +10,8 @@ require (
 require github.com/avast/retry-go/v4 v4.6.1 // indirect
 
 require (
-	github.com/buger/jsonparser v1.1.1
+	github.com/buger/jsonparser v1.1.2-0.20220418200129-61b32cfdfa0f
+	github.com/go-andiamo/splitter v1.2.5
 	github.com/kazeburo/followparser v0.2.7
 	github.com/mackerelio/golib v1.2.1
 	golang.org/x/sys v0.21.0 // indirect

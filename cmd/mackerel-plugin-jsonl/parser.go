@@ -4,26 +4,35 @@ import (
 	"bytes"
 	"log"
 	"strconv"
+	"strings"
 	"unsafe"
 
 	"github.com/buger/jsonparser"
 )
 
 type Parser struct {
-	opt *Opt
+	opt             *Opt
+	unsafeStringMap map[string]string
+	paths           [][]string
 }
 
 func NewParser(opt *Opt) *Parser {
 	// initialize groupBy map and percentiles slice
 	for i := range opt.aggregatorFunctions {
-		if opt.aggregatorFunctions[i].aggregator == "group_by" {
+		if strings.HasPrefix(opt.aggregatorFunctions[i].aggregator, "group_by") {
 			opt.aggregatorFunctions[i].groupBy = make(map[string]int)
 		} else if opt.aggregatorFunctions[i].aggregator == "percentile" {
 			opt.aggregatorFunctions[i].percentiles = []float64{}
 		}
 	}
+	paths := [][]string{}
+	for _, af := range opt.aggregatorFunctions {
+		paths = append(paths, af.jsonKey)
+	}
 	return &Parser{
-		opt: opt,
+		opt:             opt,
+		unsafeStringMap: make(map[string]string),
+		paths:           paths,
 	}
 }
 
@@ -31,8 +40,12 @@ func bfloat64(b []byte) (float64, error) {
 	return strconv.ParseFloat(unsafe.String(unsafe.SliceData(b), len(b)), 64)
 }
 
-func unsafeString(b []byte) string {
-	return unsafe.String(unsafe.SliceData(b), len(b))
+func (p *Parser) unsafeString(b []byte) string {
+	u := unsafe.String(unsafe.SliceData(b), len(b))
+	if _, ok := p.unsafeStringMap[u]; !ok {
+		p.unsafeStringMap[u] = string(b)
+	}
+	return p.unsafeStringMap[u]
 }
 
 func (p *Parser) jsonParsed(idx int, value []byte, vt jsonparser.ValueType, err error) {
@@ -43,12 +56,12 @@ func (p *Parser) jsonParsed(idx int, value []byte, vt jsonparser.ValueType, err 
 	if (vt == jsonparser.NotExist) || (vt == jsonparser.Null) {
 		return
 	}
-	// log.Printf("debug: idx=%d, value=%s, vt=%v", idx, string(value), vt)
+
 	switch p.opt.aggregatorFunctions[idx].aggregator {
 	case "count":
 		p.opt.aggregatorFunctions[idx].count++
-	case "group_by":
-		str := unsafeString(value)
+	case "group_by", "group_by_with_percentage":
+		str := p.unsafeString(value)
 		p.opt.aggregatorFunctions[idx].groupBy[str]++
 	case "percentile":
 		floatValue, err := bfloat64(value)
@@ -73,11 +86,8 @@ func (p *Parser) Parse(b []byte) error {
 			b = b[i:]
 		}
 	}
-	paths := [][]string{}
-	for _, af := range p.opt.aggregatorFunctions {
-		paths = append(paths, af.jsonKey)
-	}
-	jsonparser.EachKey(b, p.jsonParsed, paths...)
+
+	jsonparser.EachKey(b, p.jsonParsed, p.paths...)
 	return nil
 }
 
