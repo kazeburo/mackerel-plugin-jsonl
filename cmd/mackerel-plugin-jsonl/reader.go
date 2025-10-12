@@ -33,10 +33,10 @@ func (p *Opt) run() error {
 }
 
 func (p *Opt) calculatePerDuration(i int) float64 {
-	if !p.PerSec {
+	if p.PerSec {
 		return float64(i) / p.duration
 	}
-	return float64(i) / p.duration / 60
+	return (float64(i) / p.duration) * 60
 }
 
 func (p *Opt) Output() string {
