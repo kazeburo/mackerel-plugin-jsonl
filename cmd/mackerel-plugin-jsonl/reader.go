@@ -11,16 +11,16 @@ import (
 )
 
 type JsonKeyModifier func(string) string
-type JsonKeyInitilizer func(map[string]int) map[string]int
+type JsonKeyInitializer func(map[string]int) map[string]int
 type AggregatorFunction struct {
-	name               string
-	jsonKey            []string
-	JsonKeyModifiers   []JsonKeyModifier
-	JsonKeyInitilizers []JsonKeyInitilizer
-	aggregator         string
-	count              int
-	groupBy            map[string]int
-	percentiles        []float64
+	name                string
+	jsonKey             []string
+	JsonKeyModifiers    []JsonKeyModifier
+	JsonKeyInitializers []JsonKeyInitializer
+	aggregator          string
+	count               int
+	groupBy             map[string]int
+	percentiles         []float64
 }
 
 func (af *AggregatorFunction) applyModifiers(s string) string {
@@ -31,7 +31,7 @@ func (af *AggregatorFunction) applyModifiers(s string) string {
 }
 
 func (af *AggregatorFunction) applyInitializers(m map[string]int) map[string]int {
-	for _, init := range af.JsonKeyInitilizers {
+	for _, init := range af.JsonKeyInitializers {
 		m = init(m)
 	}
 	return m
@@ -66,7 +66,7 @@ func (p *Opt) check() error {
 	for i := 0; i < len(p.KeyNames); i++ {
 		var keys []string
 		var modifiers []JsonKeyModifier
-		var initializers []JsonKeyInitilizer
+		var initializers []JsonKeyInitializer
 		var err error
 		switch p.Aggregator[i] {
 		case "count", "percentile":
@@ -86,14 +86,14 @@ func (p *Opt) check() error {
 			return fmt.Errorf("unknown aggregator: %s", p.Aggregator[i])
 		}
 		af := &AggregatorFunction{
-			name:               p.KeyNames[i],
-			jsonKey:            keys,
-			JsonKeyModifiers:   modifiers,
-			JsonKeyInitilizers: initializers,
-			aggregator:         p.Aggregator[i],
-			count:              0,
-			groupBy:            map[string]int{},
-			percentiles:        []float64{},
+			name:                p.KeyNames[i],
+			jsonKey:             keys,
+			JsonKeyModifiers:    modifiers,
+			JsonKeyInitializers: initializers,
+			aggregator:          p.Aggregator[i],
+			count:               0,
+			groupBy:             map[string]int{},
+			percentiles:         []float64{},
 		}
 		p.aggregatorFunctions = append(p.aggregatorFunctions, af)
 	}

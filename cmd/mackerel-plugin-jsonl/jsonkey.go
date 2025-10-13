@@ -12,9 +12,9 @@ import (
 var ErrEmptyJsonKey = errors.New("json key is empty")
 
 // path.to.key | toupper | tolower | trimspace | replace(regex, repl)
-func parseJsonKeyWithFunc(s string) ([]string, []JsonKeyModifier, []JsonKeyInitilizer, error) {
+func parseJsonKeyWithFunc(s string) ([]string, []JsonKeyModifier, []JsonKeyInitializer, error) {
 	emptyJsonModifier := []JsonKeyModifier{}
-	emptyJsonInitializer := []JsonKeyInitilizer{}
+	emptyJsonInitializer := []JsonKeyInitializer{}
 	// , splitter.Parenthesis, splitter.SquareBracket
 	sp, _ := splitter.NewSplitter('|', splitter.DoubleQuotesBackSlashEscaped, splitter.SingleQuotesDoubleEscaped, splitter.Parenthesis, splitter.SquareBrackets)
 	// do not unescapeQuotes. do split more times
@@ -30,7 +30,7 @@ func parseJsonKeyWithFunc(s string) ([]string, []JsonKeyModifier, []JsonKeyIniti
 		return []string{}, emptyJsonModifier, emptyJsonInitializer, err
 	}
 	modifiers := []JsonKeyModifier{}
-	initializers := []JsonKeyInitilizer{}
+	initializers := []JsonKeyInitializer{}
 	for _, fn := range keys[1:] {
 		if fn == "tolower" {
 			modifiers = append(modifiers, func(s string) string {
