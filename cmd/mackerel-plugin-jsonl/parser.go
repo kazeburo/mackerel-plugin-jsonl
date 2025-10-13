@@ -4,33 +4,18 @@ import (
 	"bytes"
 	"log"
 	"strconv"
-	"strings"
 	"unsafe"
 
 	"github.com/buger/jsonparser"
 )
 
 type Parser struct {
-	opt   *Opt
-	paths [][]string
+	opt *Opt
 }
 
 func NewParser(opt *Opt) *Parser {
-	// initialize groupBy map and percentiles slice
-	for i := range opt.aggregatorFunctions {
-		if strings.HasPrefix(opt.aggregatorFunctions[i].aggregator, "group_by") {
-			opt.aggregatorFunctions[i].groupBy = make(map[string]int)
-		} else if opt.aggregatorFunctions[i].aggregator == "percentile" {
-			opt.aggregatorFunctions[i].percentiles = []float64{}
-		}
-	}
-	paths := [][]string{}
-	for _, af := range opt.aggregatorFunctions {
-		paths = append(paths, af.jsonKey)
-	}
 	return &Parser{
-		opt:   opt,
-		paths: paths,
+		opt: opt,
 	}
 }
 
@@ -47,18 +32,10 @@ func (p *Parser) jsonParsed(idx int, value []byte, vt jsonparser.ValueType, err 
 		return
 	}
 
-	switch p.opt.aggregatorFunctions[idx].aggregator {
-	case "count":
-		p.opt.aggregatorFunctions[idx].count++
-	case "group_by", "group_by_with_percentage":
-		p.opt.aggregatorFunctions[idx].groupBy[string(value)]++
-	case "percentile":
-		floatValue, err := bfloat64(value)
-		if err != nil {
-			log.Printf("error: %v", err)
-			return
-		}
-		p.opt.aggregatorFunctions[idx].percentiles = append(p.opt.aggregatorFunctions[idx].percentiles, floatValue)
+	err = p.opt.aggregatorFunctions[idx].appendData(value)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return
 	}
 }
 
@@ -76,7 +53,7 @@ func (p *Parser) Parse(b []byte) error {
 		}
 	}
 
-	jsonparser.EachKey(b, p.jsonParsed, p.paths...)
+	jsonparser.EachKey(b, p.jsonParsed, p.opt.paths...)
 	return nil
 }
 

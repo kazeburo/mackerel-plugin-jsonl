@@ -10,7 +10,116 @@ import (
 	"github.com/montanaflynn/stats"
 )
 
-func (p *Opt) run() error {
+type JsonKeyModifier func(string) string
+type JsonKeyInitilizer func(map[string]int) map[string]int
+type AggregatorFunction struct {
+	name               string
+	jsonKey            []string
+	JsonKeyModifiers   []JsonKeyModifier
+	JsonKeyInitilizers []JsonKeyInitilizer
+	aggregator         string
+	count              int
+	groupBy            map[string]int
+	percentiles        []float64
+}
+
+func (af *AggregatorFunction) applyModifiers(s string) string {
+	for _, mod := range af.JsonKeyModifiers {
+		s = mod(s)
+	}
+	return s
+}
+
+func (af *AggregatorFunction) applyInitializers(m map[string]int) map[string]int {
+	for _, init := range af.JsonKeyInitilizers {
+		m = init(m)
+	}
+	return m
+}
+
+func (af *AggregatorFunction) appendData(b []byte) error {
+	switch af.aggregator {
+	case "count":
+		af.count++
+	case "group_by", "group_by_with_percentage":
+		af.groupBy[string(b)]++
+	case "percentile":
+		floatValue, err := bfloat64(b)
+		if err != nil {
+			return err
+		}
+		af.percentiles = append(af.percentiles, floatValue)
+	}
+
+	return nil
+}
+
+func (p *Opt) check() error {
+	if len(p.KeyNames) == 0 {
+		return fmt.Errorf("specify --key-name <name> --json-path <path> --aggregator <type>")
+	}
+
+	if len(p.KeyNames) != len(p.JsonKeys) || len(p.KeyNames) != len(p.Aggregator) {
+		return fmt.Errorf("--key-name, --json-path and --aggregator must be specified the same number of times")
+	}
+
+	for i := 0; i < len(p.KeyNames); i++ {
+		var keys []string
+		var modifiers []JsonKeyModifier
+		var initializers []JsonKeyInitilizer
+		var err error
+		switch p.Aggregator[i] {
+		case "count", "percentile":
+			keys, modifiers, initializers, err = parseJsonKeyWithFunc(p.JsonKeys[i])
+			if err != nil {
+				return fmt.Errorf("invalid json key: %w", err)
+			}
+			if len(modifiers) > 0 || (len(initializers) > 0) {
+				return fmt.Errorf("modifiers and initializers are not supported for %s aggregator", p.Aggregator[i])
+			}
+		case "group_by", "group_by_with_percentage":
+			keys, modifiers, initializers, err = parseJsonKeyWithFunc(p.JsonKeys[i])
+			if err != nil {
+				return fmt.Errorf("invalid json key: %w", err)
+			}
+		default:
+			return fmt.Errorf("unknown aggregator: %s", p.Aggregator[i])
+		}
+		af := &AggregatorFunction{
+			name:               p.KeyNames[i],
+			jsonKey:            keys,
+			JsonKeyModifiers:   modifiers,
+			JsonKeyInitilizers: initializers,
+			aggregator:         p.Aggregator[i],
+			count:              0,
+			groupBy:            map[string]int{},
+			percentiles:        []float64{},
+		}
+		p.aggregatorFunctions = append(p.aggregatorFunctions, af)
+	}
+
+	if p.Filter != "" {
+		b := []byte(p.Filter)
+		p.filterByte = &b
+	}
+	if p.Ignore != "" {
+		b := []byte(p.Ignore)
+		p.ignoreByte = &b
+	}
+
+	paths := [][]string{}
+	for _, af := range p.aggregatorFunctions {
+		paths = append(paths, af.jsonKey)
+	}
+	p.paths = paths
+	return nil
+}
+
+func (p *Opt) run() (string, error) {
+	err := p.check()
+	if err != nil {
+		return "", err
+	}
 	parser := NewParser(p)
 	fp := &followparser.Parser{
 		WorkDir:  pluginutil.PluginWorkDir(),
@@ -20,16 +129,15 @@ func (p *Opt) run() error {
 	if p.LogArchiveDir != "" {
 		fp.ArchiveDir = p.LogArchiveDir
 	}
-	_, err := fp.Parse(
-		fmt.Sprintf("%s-mp-jsonl", p.Prefix),
+	_, err = fp.Parse(
+		fmt.Sprintf("%s-mackerel-plugin-jsonl", p.Prefix),
 		p.LogFile,
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
-	output := p.Output()
-	fmt.Print(output)
-	return nil
+	output := p.output()
+	return output, nil
 }
 
 func (p *Opt) calculatePerDuration(i int) float64 {
@@ -39,7 +147,7 @@ func (p *Opt) calculatePerDuration(i int) float64 {
 	return (float64(i) / p.duration) * 60
 }
 
-func (p *Opt) Output() string {
+func (p *Opt) output() string {
 	now := uint64(time.Now().Unix())
 	var output strings.Builder
 	for i := 0; i < len(p.aggregatorFunctions); i++ {
@@ -57,6 +165,7 @@ func (p *Opt) Output() string {
 				continue
 			}
 			modifiedMap := map[string]int{}
+			modifiedMap = af.applyInitializers(modifiedMap)
 			for k, v := range af.groupBy {
 				safeKey := strings.ReplaceAll(k, " ", "_")
 				safeKey = strings.ReplaceAll(safeKey, ".", "_")

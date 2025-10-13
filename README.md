@@ -61,6 +61,7 @@ command = "/path/to/mackerel-plugin-jsonl --key-name count --json-key foo.bar --
 - `toupper` : 大文字化
 - `trimspace` : 前後の空白を除去
 - `replace('pattern','repl')` : 正規表現で置換
+- `have('key1','key2','key3')` : 初期状態のキーのリスト
 
 例:
 ```
@@ -71,22 +72,26 @@ command = "/path/to/mackerel-plugin-jsonl --key-name count --json-key foo.bar --
 ## JSONによるアクセスログのメトリクス作成例
 
 ```
-% /path/to/mackerel-plugin-jsonl --prefix json --log-file json.log -k total.count -j time -a count -k status -j 'status|replace("^(.).+$","${1}xx")' -a group_by_with_percentage -k latency -j reqtime -a percentile
-json.total.count        80000.000000    1760281381
-json.status.4xx 24481.600000    1760281381
-json.status.2xx 24769.733333    1760281381
-json.status.3xx 12236.933333    1760281381
-json.status.5xx 18511.733333    1760281381
-json.status_percentage.5xx      23.139667       1760281381
-json.status_percentage.4xx      30.602000       1760281381
-json.status_percentage.2xx      30.962167       1760281381
-json.status_percentage.3xx      15.296167       1760281381
-json.latency.mean       0.030000        1760281381
-json.latency.p90        0.030000        1760281381
-json.latency.p95        0.030000        1760281381
-json.latency.p99        0.030000        1760281381
+% /path/to/mackerel-plugin-jsonl --prefix json --log-file json.log \
+  -k total.count -j time -a count \
+  -k status -j 'status|replace("^(?:([1235])\d{2}|(4)(?:[0-8]\d|9[0-8]))$","${1}${2}xx")|have("2xx","3xx","4xx","499","5xx")' -a group_by_with_percentage \
+  -k latency -j reqtime -a percentile
+json.total.count        4800000.000000  1760339314
+json.status.3xx 684256.000000   1760339314
+json.status.4xx 1370792.000000  1760339314
+json.status.499 344392.000000   1760339314
+json.status.5xx 1031020.000000  1760339314
+json.status.2xx 1369540.000000  1760339314
+json.status_percentage.2xx      28.532083       1760339314
+json.status_percentage.3xx      14.255333       1760339314
+json.status_percentage.4xx      28.558167       1760339314
+json.status_percentage.499      7.174833        1760339314
+json.status_percentage.5xx      21.479583       1760339314
+json.latency.mean       0.030000        1760339314
+json.latency.p99        0.030000        1760339314
+json.latency.p90        0.030000        1760339314
+json.latency.p95        0.030000        1760339314
 ```
-
 
 ## ライセンス
 

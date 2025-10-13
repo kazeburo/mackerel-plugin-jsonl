@@ -10,25 +10,6 @@ import (
 
 var version string
 
-type JsonKeyModifier func(string) string
-
-type AggregatorFunction struct {
-	name             string
-	jsonKey          []string
-	JsonKeyModifiers []JsonKeyModifier
-	aggregator       string
-	count            int
-	groupBy          map[string]int
-	percentiles      []float64
-}
-
-func (af *AggregatorFunction) applyModifiers(s string) string {
-	for _, mod := range af.JsonKeyModifiers {
-		s = mod(s)
-	}
-	return s
-}
-
 type Opt struct {
 	Version             bool     `short:"v" long:"version" description:"Show version"`
 	Filter              string   `long:"filter" description:"filter string used before check pattern."`
@@ -45,6 +26,7 @@ type Opt struct {
 	aggregatorFunctions []*AggregatorFunction
 	filterByte          *[]byte
 	ignoreByte          *[]byte
+	paths               [][]string
 	duration            float64
 }
 
@@ -71,63 +53,12 @@ Compiler: %s %s
 		return 1
 	}
 
-	if len(opt.KeyNames) == 0 {
-		fmt.Fprint(os.Stderr, "Specify --key-name <name> --json-path <path> --aggregator <type>\n")
-		return 1
-	}
-
-	if len(opt.KeyNames) != len(opt.JsonKeys) || len(opt.KeyNames) != len(opt.Aggregator) {
-		fmt.Fprint(os.Stderr, "--key-name, --json-path and --aggregator must be specified the same number of times\n")
-		return 1
-	}
-
-	for i := 0; i < len(opt.KeyNames); i++ {
-		var keys []string
-		var modifiers []JsonKeyModifier
-		switch opt.Aggregator[i] {
-		case "count", "percentile":
-			keys, modifiers, err = parseJsonKeyWithFunc(opt.JsonKeys[i])
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "invalid json key: %v\n", err)
-				return 1
-			}
-			if len(modifiers) > 0 {
-				fmt.Fprintf(os.Stderr, "modifiers are not supported for %s aggregator\n", opt.Aggregator[i])
-				return 1
-			}
-		case "group_by", "group_by_with_percentage":
-			keys, modifiers, err = parseJsonKeyWithFunc(opt.JsonKeys[i])
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "invalid json key: %v\n", err)
-				return 1
-			}
-		default:
-			fmt.Fprintf(os.Stderr, "unknown aggregator: %s\n", opt.Aggregator[i])
-			return 1
-		}
-		af := AggregatorFunction{
-			name:             opt.KeyNames[i],
-			jsonKey:          keys,
-			JsonKeyModifiers: modifiers,
-			aggregator:       opt.Aggregator[i],
-		}
-		opt.aggregatorFunctions = append(opt.aggregatorFunctions, &af)
-	}
-
-	if opt.Filter != "" {
-		b := []byte(opt.Filter)
-		opt.filterByte = &b
-	}
-	if opt.Ignore != "" {
-		b := []byte(opt.Ignore)
-		opt.ignoreByte = &b
-	}
-
-	err = opt.run()
+	output, err := opt.run()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return 1
 	}
+	fmt.Print(output)
 
 	return 0
 }

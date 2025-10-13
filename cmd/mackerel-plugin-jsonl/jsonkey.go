@@ -12,23 +12,25 @@ import (
 var ErrEmptyJsonKey = errors.New("json key is empty")
 
 // path.to.key | toupper | tolower | trimspace | replace(regex, repl)
-func parseJsonKeyWithFunc(s string) ([]string, []JsonKeyModifier, error) {
+func parseJsonKeyWithFunc(s string) ([]string, []JsonKeyModifier, []JsonKeyInitilizer, error) {
 	emptyJsonModifier := []JsonKeyModifier{}
+	emptyJsonInitializer := []JsonKeyInitilizer{}
 	// , splitter.Parenthesis, splitter.SquareBracket
 	sp, _ := splitter.NewSplitter('|', splitter.DoubleQuotesBackSlashEscaped, splitter.SingleQuotesDoubleEscaped, splitter.Parenthesis, splitter.SquareBrackets)
 	// do not unescapeQuotes. do split more times
 	keys, err := sp.Split(s, splitter.TrimSpaces, splitter.IgnoreEmpties)
 	if err != nil {
-		return []string{}, emptyJsonModifier, err
+		return []string{}, emptyJsonModifier, emptyJsonInitializer, err
 	}
 	if len(keys) == 0 {
-		return []string{}, emptyJsonModifier, ErrEmptyJsonKey
+		return []string{}, emptyJsonModifier, emptyJsonInitializer, ErrEmptyJsonKey
 	}
 	jsonKey, err := parseJsonKey(keys[0])
 	if err != nil {
-		return []string{}, emptyJsonModifier, err
+		return []string{}, emptyJsonModifier, emptyJsonInitializer, err
 	}
 	modifiers := []JsonKeyModifier{}
+	initializers := []JsonKeyInitilizer{}
 	for _, fn := range keys[1:] {
 		if fn == "tolower" {
 			modifiers = append(modifiers, func(s string) string {
@@ -49,25 +51,39 @@ func parseJsonKeyWithFunc(s string) ([]string, []JsonKeyModifier, error) {
 			// must unescapeQuotes
 			parts, err := s.Split(inner, splitter.TrimSpaces, splitter.UnescapeQuotes, splitter.IgnoreEmpties)
 			if err != nil {
-				return []string{}, emptyJsonModifier, err
+				return []string{}, emptyJsonModifier, emptyJsonInitializer, err
 			}
 			if len(parts) != 2 {
-				return []string{}, emptyJsonModifier, fmt.Errorf("invalid replace() format: %s", fn)
+				return []string{}, emptyJsonModifier, emptyJsonInitializer, fmt.Errorf("invalid replace() format: %s", fn)
 			}
 			pattern := parts[0]
 			reg, err := regexp.Compile(pattern) // validate regexp
 			if err != nil {
-				return []string{}, emptyJsonModifier, fmt.Errorf("invalid regexp: %w in %s", err, fn)
+				return []string{}, emptyJsonModifier, emptyJsonInitializer, fmt.Errorf("invalid regexp: %w in %s", err, fn)
 			}
 			repl := parts[1]
 			modifiers = append(modifiers, func(s string) string {
 				return reg.ReplaceAllString(s, repl)
 			})
+		} else if strings.HasPrefix(fn, "have(") && strings.HasSuffix(fn, ")") {
+			// have("foo","bar","baz")
+			inner := fn[5 : len(fn)-1]
+			s, _ := splitter.NewSplitter(',', splitter.DoubleQuotesBackSlashEscaped, splitter.SingleQuotesDoubleEscaped)
+			parts, err := s.Split(inner, splitter.TrimSpaces, splitter.UnescapeQuotes, splitter.IgnoreEmpties)
+			if err != nil {
+				return []string{}, emptyJsonModifier, emptyJsonInitializer, err
+			}
+			initializers = append(initializers, func(m map[string]int) map[string]int {
+				for _, p := range parts {
+					m[p] = 0
+				}
+				return m
+			})
 		} else {
-			return []string{}, emptyJsonModifier, fmt.Errorf("unknown modifier: %s", fn)
+			return []string{}, emptyJsonModifier, emptyJsonInitializer, fmt.Errorf("unknown modifier: %s", fn)
 		}
 	}
-	return jsonKey, modifiers, nil
+	return jsonKey, modifiers, initializers, nil
 }
 
 // path.to."foo.baz".[0].key

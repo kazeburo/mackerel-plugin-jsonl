@@ -28,17 +28,22 @@ func TestParser_Parse(t *testing.T) {
 			{
 				aggregator: "count",
 				jsonKey:    []string{"foo"},
+				count:      0,
 			},
 			{
 				aggregator: "group_by",
 				jsonKey:    []string{"status"},
+				groupBy:    map[string]int{},
 			},
 			{
-				aggregator: "percentile",
-				jsonKey:    []string{"ptime"},
+				aggregator:  "percentile",
+				jsonKey:     []string{"ptime"},
+				percentiles: []float64{},
 			},
 		},
+		paths: [][]string{{"foo"}, {"status"}, {"ptime"}},
 	}
+
 	p := NewParser(opt)
 	json := []byte(`{"foo": 1, "status": "ok", "ptime": 100}`)
 	err := p.Parse(json)

@@ -6,12 +6,15 @@ import (
 )
 
 func TestParseJsonKeyWithFunc_basic(t *testing.T) {
-	key, mods, err := parseJsonKeyWithFunc("foo.bar")
+	key, mods, inits, err := parseJsonKeyWithFunc("foo.bar")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !reflect.DeepEqual(key, []string{"foo", "bar"}) {
 		t.Errorf("expected [foo bar], got %v", key)
+	}
+	if len(inits) != 0 {
+		t.Errorf("expected no initializers, got %d", len(inits))
 	}
 	if len(mods) != 0 {
 		t.Errorf("expected no modifiers, got %d", len(mods))
@@ -19,12 +22,15 @@ func TestParseJsonKeyWithFunc_basic(t *testing.T) {
 }
 
 func TestParseJsonKeyWithFunc_modifiers(t *testing.T) {
-	key, mods, err := parseJsonKeyWithFunc("foo|tolower|toupper|trimspace")
+	key, mods, inits, err := parseJsonKeyWithFunc("foo|tolower|toupper|trimspace|have('a','b','c')")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if key[0] != "foo" {
 		t.Errorf("expected key 'foo', got %v", key)
+	}
+	if len(inits) != 1 {
+		t.Errorf("expected 1 initializer, got %d", len(inits))
 	}
 	if len(mods) != 3 {
 		t.Errorf("expected 3 modifiers, got %d", len(mods))
@@ -37,16 +43,27 @@ func TestParseJsonKeyWithFunc_modifiers(t *testing.T) {
 	if v != "FOO" {
 		t.Errorf("modifier chain failed, got %v", v)
 	}
+	// test initializer
+	m := map[string]int{}
+	m = inits[0](m)
+	for _, k := range []string{"a", "b", "c"} {
+		if _, ok := m[k]; !ok {
+			t.Errorf("initializer failed, key %s not found", k)
+		}
+	}
 }
 
 func TestParseJsonKeyWithFunc_replace(t *testing.T) {
 	{
-		key, mods, err := parseJsonKeyWithFunc("foo|replace('o','a')")
+		key, mods, inits, err := parseJsonKeyWithFunc("foo|replace('o','a')")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if key[0] != "foo" {
 			t.Errorf("expected key 'foo', got %v", key)
+		}
+		if len(inits) != 0 {
+			t.Errorf("expected no initializers, got %d", len(inits))
 		}
 		if len(mods) != 1 {
 			t.Errorf("expected 1 modifier, got %d", len(mods))
@@ -57,12 +74,15 @@ func TestParseJsonKeyWithFunc_replace(t *testing.T) {
 		}
 	}
 	{
-		key, mods, err := parseJsonKeyWithFunc(`foo|replace('[o|f]','a"')`)
+		key, mods, inits, err := parseJsonKeyWithFunc(`foo|replace('[o|f]','a"')`)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if key[0] != "foo" {
 			t.Errorf("expected key 'foo', got %v", key)
+		}
+		if len(inits) != 0 {
+			t.Errorf("expected no initializers, got %d", len(inits))
 		}
 		if len(mods) != 1 {
 			t.Errorf("expected 1 modifier, got %d", len(mods))
@@ -75,20 +95,20 @@ func TestParseJsonKeyWithFunc_replace(t *testing.T) {
 }
 
 func TestParseJsonKeyWithFunc_errors(t *testing.T) {
-	_, _, err := parseJsonKeyWithFunc("")
+	_, _, _, err := parseJsonKeyWithFunc("")
 	t.Logf("err for empty key: %#v", err)
 	if err == nil {
 		t.Error("expected error for empty key")
 	}
-	_, _, err = parseJsonKeyWithFunc("foo|replace('o')")
+	_, _, _, err = parseJsonKeyWithFunc("foo|replace('o')")
 	if err == nil {
 		t.Error("expected error for invalid replace format")
 	}
-	_, _, err = parseJsonKeyWithFunc("foo|replace('(','a')")
+	_, _, _, err = parseJsonKeyWithFunc("foo|replace('(','a')")
 	if err == nil {
 		t.Error("expected error for invalid regexp")
 	}
-	_, _, err = parseJsonKeyWithFunc("foo|unknownmod")
+	_, _, _, err = parseJsonKeyWithFunc("foo|unknownmod")
 	if err == nil {
 		t.Error("expected error for unknown modifier")
 	}
@@ -140,7 +160,7 @@ func TestParseJsonKeyWithFunc_cases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.input, func(t *testing.T) {
-			key, funcs, err := parseJsonKeyWithFunc(tc.input)
+			key, funcs, _, err := parseJsonKeyWithFunc(tc.input)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
