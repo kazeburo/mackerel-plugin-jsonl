@@ -2,7 +2,7 @@ VERSION=0.0.1
 LDFLAGS=-ldflags "-w -s -X main.version=${VERSION}"
 all: mackerel-plugin-jsonl
 
-.PHONY: mackerel-plugin-linux-process-status
+.PHONY: mackerel-plugin-jsonl
 
 mackerel-plugin-jsonl: cmd/mackerel-plugin-jsonl/*.go
 	go build $(LDFLAGS) -o mackerel-plugin-jsonl cmd/mackerel-plugin-jsonl/*.go

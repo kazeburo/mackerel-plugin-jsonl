@@ -1,0 +1,15 @@
+builds:
+  - binary: mackerel-plugin-jsonl
+    main: ./cmd/mackerel-plugin-jsonl
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format: zip
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+release:
+  github:
+    owner: kazeburo
+    name: mackerel-plugin-jsonl
