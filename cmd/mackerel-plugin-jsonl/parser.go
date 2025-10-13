@@ -11,9 +11,8 @@ import (
 )
 
 type Parser struct {
-	opt             *Opt
-	unsafeStringMap map[string]string
-	paths           [][]string
+	opt   *Opt
+	paths [][]string
 }
 
 func NewParser(opt *Opt) *Parser {
@@ -30,22 +29,13 @@ func NewParser(opt *Opt) *Parser {
 		paths = append(paths, af.jsonKey)
 	}
 	return &Parser{
-		opt:             opt,
-		unsafeStringMap: make(map[string]string),
-		paths:           paths,
+		opt:   opt,
+		paths: paths,
 	}
 }
 
 func bfloat64(b []byte) (float64, error) {
 	return strconv.ParseFloat(unsafe.String(unsafe.SliceData(b), len(b)), 64)
-}
-
-func (p *Parser) unsafeString(b []byte) string {
-	u := unsafe.String(unsafe.SliceData(b), len(b))
-	if _, ok := p.unsafeStringMap[u]; !ok {
-		p.unsafeStringMap[u] = string(b)
-	}
-	return p.unsafeStringMap[u]
 }
 
 func (p *Parser) jsonParsed(idx int, value []byte, vt jsonparser.ValueType, err error) {
@@ -61,8 +51,7 @@ func (p *Parser) jsonParsed(idx int, value []byte, vt jsonparser.ValueType, err 
 	case "count":
 		p.opt.aggregatorFunctions[idx].count++
 	case "group_by", "group_by_with_percentage":
-		str := p.unsafeString(value)
-		p.opt.aggregatorFunctions[idx].groupBy[str]++
+		p.opt.aggregatorFunctions[idx].groupBy[string(value)]++
 	case "percentile":
 		floatValue, err := bfloat64(value)
 		if err != nil {
