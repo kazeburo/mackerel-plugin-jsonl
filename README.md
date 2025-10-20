@@ -8,7 +8,7 @@ JSON Lines 形式のログからメトリックを抽出し、Mackerelに投稿�
 mkrを使うと楽です
 
 ```
-mkr plugin --upgrade kazeburo/mackerel-plugin-jsonl
+mkr plugin install --upgrade kazeburo/mackerel-plugin-jsonl
 ```
 
 ## 基本的な使い方
@@ -61,7 +61,7 @@ command = "/path/to/mackerel-plugin-jsonl --key-name count --json-key foo.bar --
 - `toupper` : 大文字化
 - `trimspace` : 前後の空白を除去
 - `replace('pattern','repl')` : 正規表現で置換
-- `have('key1','key2','key3')` : 初期状態のキーのリスト
+- `have('key1','key2','key3')` : 初期状態のキーのリスト。集計した値がない時に `0` で結果を生成できます
 
 例:
 ```
