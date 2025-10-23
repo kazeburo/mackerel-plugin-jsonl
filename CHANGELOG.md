@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.0.3](https://github.com/kazeburo/mackerel-plugin-jsonl/compare/v0.0.2...v0.0.3) - 2025-10-23
+- update readme and show version by @kazeburo in https://github.com/kazeburo/mackerel-plugin-jsonl/pull/5
+
 ## [v0.0.2](https://github.com/kazeburo/mackerel-plugin-jsonl/compare/v0.0.1...v0.0.2) - 2025-10-20
 - update deps by @kazeburo in https://github.com/kazeburo/mackerel-plugin-jsonl/pull/3
 
