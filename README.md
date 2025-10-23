@@ -1,7 +1,7 @@
 
 # mackerel-plugin-jsonl
 
-JSON Lines 形式のログからメトリックを抽出し、Mackerelに投稿するためのカスタムプラグインです。
+JSON Lines 形式のログからメトリックを生成し、Mackerelに投稿するためのカスタムプラグインです。
 
 ## インストール方法
 
@@ -69,7 +69,9 @@ command = "/path/to/mackerel-plugin-jsonl --key-name count --json-key foo.bar --
 --json-key "message|replace('error','warn')"
 ```
 
-## JSONによるアクセスログのメトリクス作成例
+## mackerel-plugin-jsonlによるメトリクス例(1)
+
+一般的なJSON形式のWebサーバのアクセスログからメトリクスを生成する
 
 ```
 % /path/to/mackerel-plugin-jsonl --prefix json --log-file json.log \
@@ -92,6 +94,38 @@ json.latency.p99        0.030000        1760339314
 json.latency.p90        0.030000        1760339314
 json.latency.p95        0.030000        1760339314
 ```
+
+## mackerel-plugin-jsonlによるメトリクス例(2)
+
+dnstap (https://github.com/dmachard/DNS-collector) のJSONのログからメトリクス生成
+
+```
+mackerel-plugin-jsonl --prefix dnstap -l /var/log/dnstap/query.log -k network.proto -j 'network.protocol|tolower|have(tcp,udp)' -a group_by -k dns.qtype -j 'dns.qtype|tolower|have(a,aaaa)' -a group_by_with_percentage -k dns.latency -j dnstap.latency -a percentile -k dns.rcode -j 'dns.rcode|tolower|have(noerror,servfail,nxdomain,refused)' -a group_by --per-second
+dnstap.network.proto.udp	25.818182	1760582504
+dnstap.network.proto.tcp	0.000000	1760582504
+dnstap.dns.qtype.a	19.303030	1760582504
+dnstap.dns.qtype.aaaa	3.666667	1760582504
+dnstap.dns.qtype.srv	0.030303	1760582504
+dnstap.dns.qtype.https	2.757576	1760582504
+dnstap.dns.qtype.mx	0.030303	1760582504
+dnstap.dns.qtype.txt	0.030303	1760582504
+dnstap.dns.qtype_percentage.a	74.765258	1760582504
+dnstap.dns.qtype_percentage.aaaa	14.201878	1760582504
+dnstap.dns.qtype_percentage.srv	0.117371	1760582504
+dnstap.dns.qtype_percentage.https	10.680751	1760582504
+dnstap.dns.qtype_percentage.mx	0.117371	1760582504
+dnstap.dns.qtype_percentage.txt	0.117371	1760582504
+dnstap.dns.latency.mean	0.000000	1760582504
+dnstap.dns.latency.p90	0.000000	1760582504
+dnstap.dns.latency.p95	0.000000	1760582504
+dnstap.dns.latency.p99	0.000000	1760582504
+dnstap.dns.rcode.refused	0.000000	1760582504
+dnstap.dns.rcode.noerror	25.636364	1760582504
+dnstap.dns.rcode.servfail	0.000000	1760582504
+dnstap.dns.rcode.nxdomain	0.181818	1760582504
+```
+
+
 
 ## ライセンス
 
