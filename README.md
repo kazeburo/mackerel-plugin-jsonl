@@ -100,7 +100,22 @@ json.latency.p95        0.030000        1760339314
 dnstap (https://github.com/dmachard/DNS-collector) のJSONログからメトリクス生成
 
 ```
-mackerel-plugin-jsonl --prefix dnstap -l /var/log/dnstap/query.log -k network.proto -j 'network.protocol|tolower|have(tcp,udp)' -a group_by -k dns.qtype -j 'dns.qtype|tolower|have(a,aaaa)' -a group_by_with_percentage -k dns.latency -j dnstap.latency -a percentile -k dns.rcode -j 'dns.rcode|tolower|have(noerror,servfail,nxdomain,refused)' -a group_by --per-second
+mackerel-plugin-jsonl \
+  --prefix dnstap \
+  -l /var/log/dnstap/query.log \
+  -k network.proto \
+  -j 'network.protocol|tolower|have(tcp,udp)' \
+  -a group_by \
+  -k dns.qtype \
+  -j 'dns.qtype|tolower|have(a,aaaa)' \
+  -a group_by_with_percentage \
+  -k dns.latency \
+  -j dnstap.latency \
+  -a percentile \
+  -k dns.rcode \
+  -j 'dns.rcode|tolower|have(noerror,servfail,nxdomain,refused)' \
+  -a group_by \
+  --per-second
 dnstap.network.proto.udp	25.818182	1760582504
 dnstap.network.proto.tcp	0.000000	1760582504
 dnstap.dns.qtype.a	19.303030	1760582504
