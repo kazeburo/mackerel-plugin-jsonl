@@ -97,7 +97,7 @@ json.latency.p95        0.030000        1760339314
 
 ## mackerel-plugin-jsonlによるメトリクス例(2)
 
-dnstap (https://github.com/dmachard/DNS-collector) のJSONのログからメトリクス生成
+dnstap (https://github.com/dmachard/DNS-collector) のJSONログからメトリクス生成
 
 ```
 mackerel-plugin-jsonl --prefix dnstap -l /var/log/dnstap/query.log -k network.proto -j 'network.protocol|tolower|have(tcp,udp)' -a group_by -k dns.qtype -j 'dns.qtype|tolower|have(a,aaaa)' -a group_by_with_percentage -k dns.latency -j dnstap.latency -a percentile -k dns.rcode -j 'dns.rcode|tolower|have(noerror,servfail,nxdomain,refused)' -a group_by --per-second
