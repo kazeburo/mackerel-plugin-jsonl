@@ -1,4 +1,4 @@
-VERSION=0.0.2
+VERSION=0.0.3
 GITCOMMIT?=$(shell git describe --dirty --always)
 LDFLAGS=-ldflags "-w -s -X main.version=${VERSION} -X main.commit=${GITCOMMIT}"
 all: mackerel-plugin-jsonl
