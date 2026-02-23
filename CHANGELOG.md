@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.0.4](https://github.com/kazeburo/mackerel-plugin-jsonl/compare/v0.0.3...v0.0.4) - 2026-02-23
+- ci: bump goreleaser/goreleaser-action from 6.4.0 to 7.0.0 in the dependencies group by @dependabot[bot] in https://github.com/kazeburo/mackerel-plugin-jsonl/pull/10
+
 ## [v0.0.3](https://github.com/kazeburo/mackerel-plugin-jsonl/compare/v0.0.2...v0.0.3) - 2026-02-16
 - update readme and show version by @kazeburo in https://github.com/kazeburo/mackerel-plugin-jsonl/pull/5
 - Create dependabot.yml by @kazeburo in https://github.com/kazeburo/mackerel-plugin-jsonl/pull/7
