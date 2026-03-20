@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.0.5](https://github.com/kazeburo/mackerel-plugin-jsonl/compare/v0.0.4...v0.0.5) - 2026-03-20
+- go: bump github.com/buger/jsonparser from 1.1.2-0.20220418200129-61b32cfdfa0f to 1.1.2 in the dependencies group by @dependabot[bot] in https://github.com/kazeburo/mackerel-plugin-jsonl/pull/14
+
 ## [v0.0.4](https://github.com/kazeburo/mackerel-plugin-jsonl/compare/v0.0.3...v0.0.4) - 2026-03-12
 - ci: bump goreleaser/goreleaser-action from 6.4.0 to 7.0.0 in the dependencies group by @dependabot[bot] in https://github.com/kazeburo/mackerel-plugin-jsonl/pull/10
 - go: bump github.com/montanaflynn/stats from 0.7.1 to 0.8.2 in the dependencies group by @dependabot[bot] in https://github.com/kazeburo/mackerel-plugin-jsonl/pull/13
