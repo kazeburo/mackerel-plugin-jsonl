@@ -13,6 +13,6 @@ require (
 	github.com/buger/jsonparser v1.1.2
 	github.com/go-andiamo/splitter v1.2.5
 	github.com/kazeburo/followparser v0.2.10
-	github.com/mackerelio/golib v1.2.1
+	github.com/mackerelio/golib v1.2.2
 	golang.org/x/sys v0.37.0 // indirect
 )
