@@ -20,7 +20,7 @@ func generateJSONLFile(b testing.TB, dir, filename string, numLines int) error {
 	}
 	defer file.Close()
 
-	for i := 0; i < numLines; i++ {
+	for i := range numLines {
 		line := fmt.Sprintf(`{"time": "%s", "status": "%d", "reqtime": "%f", "host": "%s", "req": "%s", "method": "%s", "size": "%d", "ua": "%s"}`,
 			time.Now().Format(time.RFC3339),
 			200+i%5,
@@ -75,7 +75,7 @@ func initParserForTest(b testing.TB, tmpDir string, numLines int) (*followparser
 		Prefix:     "json",
 		LogFile:    "json.log",
 	}
-	err := opt.validateAndSetup()
+	err := opt.ValidateAndSetup(nil)
 	if err != nil {
 		b.Fatalf("validateAndSetup failed: %v", err)
 	}
@@ -85,11 +85,10 @@ func initParserForTest(b testing.TB, tmpDir string, numLines int) (*followparser
 		b.Fatalf("generateJSONLFile failed: %v", err)
 	}
 
-	parser := NewParser(opt)
 	fp := &followparser.Parser{
 		ArchiveDir: tmpDir,
 		WorkDir:    tmpDir,
-		Callback:   parser,
+		Callback:   opt,
 		Silent:     true,
 	}
 	return fp, opt

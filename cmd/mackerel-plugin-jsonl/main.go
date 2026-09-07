@@ -24,7 +24,7 @@ type Opt struct {
 	Ignore              string   `long:"ignore" description:"ignore string used before check pattern."`
 	KeyNames            []string `short:"k" long:"key-name" required:"true" description:"Key name for json path"`
 	JsonKeys            []string `short:"j" long:"json-key" required:"true" description:"JSON key and modifier functions to extract log message."`
-	Aggregator          []string `short:"a" long:"aggregator" required:"true" description:"Aggregator type. valid values are count, group_by, group_by_with_percentage, percentile. count is default." choice:"count" choice:"group_by" choice:"group_by_with_percentage" choice:"percentile"`
+	Aggregator          []string `short:"a" long:"aggregator" required:"true" description:"Aggregator type. valid values are count, group_by, group_by_with_percentage, percentile. count is default." choice:"count" choice:"group_by" choice:"group_by_with_percentage" choice:"percentile"` // nolint:staticcheck
 	SkipUntilBracket    bool     `long:"skip-until-json" description:"skip reading until first { for json log with plain text header"`
 	Prefix              string   `long:"prefix" required:"true" description:"Metric key prefix"`
 	PerSec              bool     `long:"per-second" description:"calculate per-seconds count. default per minute count"`
@@ -38,31 +38,27 @@ type Opt struct {
 	duration            float64
 }
 
-func (p *Opt) Run(_ []string) (any, int) {
-	err := p.validateAndSetup()
-	if err != nil {
-		return err, flagrun.UNKNOWN
-	}
-	parser := NewParser(p)
+func (opt *Opt) Run(_ []string) (any, int) {
 	fp := &followparser.Parser{
 		WorkDir:  pluginutil.PluginWorkDir(),
-		Callback: parser,
-		Silent:   !p.Verbose,
+		Callback: opt,
+		Silent:   !opt.Verbose,
 	}
-	if p.LogArchiveDir != "" {
-		fp.ArchiveDir = p.LogArchiveDir
+	if opt.LogArchiveDir != "" {
+		fp.ArchiveDir = opt.LogArchiveDir
 	}
-	_, err = fp.Parse(
-		fmt.Sprintf("%s-mackerel-plugin-jsonl", p.Prefix),
-		p.LogFile,
+	_, err := fp.Parse(
+		fmt.Sprintf("%s-mackerel-plugin-jsonl", opt.Prefix),
+		opt.LogFile,
 	)
 	if err != nil {
 		return err, flagrun.CRITICAL
 	}
-	output := p.output()
+	output := opt.output()
 	return output, flagrun.OK
 }
 
 func main() {
-	os.Exit(flagrun.Go(&Opt{}, flagrun.Version(version)))
+	opt := &Opt{}
+	os.Exit(flagrun.Go(opt, flagrun.Version(version), flagrun.Validator(opt.ValidateAndSetup)))
 }
