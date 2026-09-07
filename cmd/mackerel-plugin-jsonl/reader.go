@@ -53,7 +53,7 @@ func (af *AggregatorFunction) appendData(b []byte) error {
 	return nil
 }
 
-func (p *Opt) validateAndSetup() error {
+func (p *Opt) ValidateAndSetup(_ []string) error {
 	if err := p.validateOptions(); err != nil {
 		return err
 	}

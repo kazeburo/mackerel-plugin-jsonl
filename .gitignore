@@ -1,3 +1,4 @@
-/mackerel-plugin-jsonl
+/mackerel-plugin-jsonl*
 /demo/json.log
 /demo/tmp
+*.pprof

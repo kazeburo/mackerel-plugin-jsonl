@@ -4,14 +4,6 @@ import (
 	"testing"
 )
 
-func TestNewParser(t *testing.T) {
-	opt := &Opt{}
-	p := NewParser(opt)
-	if p.opt != opt {
-		t.Errorf("expected opt to be set")
-	}
-}
-
 func TestParser_Parse(t *testing.T) {
 	opt := &Opt{
 		aggregatorFunctions: []*AggregatorFunction{
@@ -34,9 +26,8 @@ func TestParser_Parse(t *testing.T) {
 		paths: [][]string{{"foo"}, {"status"}, {"ptime"}},
 	}
 
-	p := NewParser(opt)
 	json := []byte(`{"foo": 1, "status": "ok", "ptime": 100}`)
-	err := p.Parse(json)
+	err := opt.Parse(json)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -53,8 +44,7 @@ func TestParser_Parse(t *testing.T) {
 
 func TestParser_Finish(t *testing.T) {
 	opt := &Opt{}
-	p := NewParser(opt)
-	p.Finish(12.34)
+	opt.Finish(12.34)
 	if opt.duration != 12.34 {
 		t.Errorf("expected duration 12.34, got %v", opt.duration)
 	}
