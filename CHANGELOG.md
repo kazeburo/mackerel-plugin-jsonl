@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.0.11](https://github.com/monitoring-forge/mackerel-plugin-jsonl/compare/v0.0.10...v0.0.11) - 2026-09-07
+
+- fix: update benchmark function and state file path for consistency by @kazeburo in https://github.com/monitoring-forge/mackerel-plugin-jsonl/pull/53
+- fix: update test workflow to include benchmarking step by @kazeburo in https://github.com/monitoring-forge/mackerel-plugin-jsonl/pull/55
+- Sync files with `monitoring-forge/github-common` by @monitoring-forge-files-sync-action[bot] in https://github.com/monitoring-forge/mackerel-plugin-jsonl/pull/57
+- feat: update flagrun and refactor validator and parser by @kazeburo in https://github.com/monitoring-forge/mackerel-plugin-jsonl/pull/60
+- ci: bump Songmu/tagpr from 1.20.1 to 1.20.2 in the dependencies group by @dependabot[bot] in https://github.com/monitoring-forge/mackerel-plugin-jsonl/pull/59
+- refactor: remove unused constants from main.go by @kazeburo in https://github.com/monitoring-forge/mackerel-plugin-jsonl/pull/61
+- refactor: remove obsolete json-mackerel-plugin-jsonl file by @kazeburo in https://github.com/monitoring-forge/mackerel-plugin-jsonl/pull/62
+
 ## [v0.0.10](https://github.com/monitoring-forge/mackerel-plugin-jsonl/compare/v0.0.9...v0.0.10) - 2026-08-30
 
 - go: bump github.com/stretchr/testify from 1.11.1 to 1.12.0 in the dependencies group by @dependabot[bot] in https://github.com/monitoring-forge/mackerel-plugin-jsonl/pull/49
