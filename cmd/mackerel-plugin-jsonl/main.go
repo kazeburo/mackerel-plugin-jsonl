@@ -11,13 +11,6 @@ import (
 
 var version string
 
-const (
-	OK = iota
-	WARNING
-	CRITICAL
-	UNKNOWN
-)
-
 type Opt struct {
 	Version             bool     `short:"v" long:"version" description:"Show version"`
 	Filter              string   `long:"filter" description:"filter string used before check pattern."`
